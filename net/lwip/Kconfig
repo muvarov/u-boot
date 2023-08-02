@@ -1,6 +1,7 @@
 menu "lwIP"
 config LWIP
 	bool "Support LWIP library"
+	select LIB_RAND
 	help
 	  Enable the lwIP library code with
 	  all dependencies (commands are implemented with lwIP
