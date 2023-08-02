@@ -66,3 +66,4 @@ obj-$(CONFIG_NET) += port/sys-arch.o
 obj-y += apps/dhcp/lwip-dhcp.o
 obj-y += apps/dns/lwip-dns.o
 obj-y += apps/tftp/
+obj-y += apps/http/
