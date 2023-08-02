@@ -125,6 +125,7 @@
 #endif
 #include "dhcpv6.h"
 #include "net_rand.h"
+#include <net/ulwip.h>
 
 /** BOOTP EXTENTIONS **/
 
@@ -393,7 +394,7 @@ static void net_cleanup_loop(void)
 	net_clear_handlers();
 }
 
-int net_init(void)
+void eth_init_rings(void)
 {
 	static int first_call = 1;
 
@@ -409,6 +410,17 @@ int net_init(void)
 			net_rx_packets[i] = net_tx_packet +
 				(i + 1) * PKTSIZE_ALIGN;
 		}
+		/* Only need to setup buffer pointers once. */
+		first_call = 0;
+	}
+}
+
+int net_init(void)
+{
+	static int first_call = 1;
+
+	eth_init_rings();
+	if (first_call) {
 		arp_init();
 		ndisc_init();
 		net_clear_handlers();
@@ -453,16 +465,18 @@ int net_loop(enum proto_t protocol)
 
 	bootstage_mark_name(BOOTSTAGE_ID_ETH_START, "eth_start");
 	net_init();
-	if (eth_is_on_demand_init()) {
-		eth_halt();
-		eth_set_current();
-		ret = eth_init();
-		if (ret < 0) {
+	if (!ulwip_active()) {
+		if (eth_is_on_demand_init()) {
 			eth_halt();
-			return ret;
+			eth_set_current();
+			ret = eth_init();
+			if (ret < 0) {
+				eth_halt();
+				return ret;
+			}
+		} else {
+			eth_init_state_only();
 		}
-	} else {
-		eth_init_state_only();
 	}
 
 restart:
@@ -633,7 +647,7 @@ restart:
 	 */
 	for (;;) {
 		schedule();
-		if (arp_timeout_check() > 0)
+		if (!ulwip_active() && (arp_timeout_check() > 0))
 			time_start = get_timer(0);
 
 		if (IS_ENABLED(CONFIG_IPV6)) {
@@ -649,6 +663,17 @@ restart:
 		 */
 		eth_rx();
 
+		if (ulwip_active()) {
+			net_set_state(NETLOOP_CONTINUE);
+			if (!ulwip_in_loop()) {
+				ret = ulwip_app_get_err(); 
+				if (ret)
+					net_set_state(NETLOOP_FAIL);
+				else
+					net_set_state(NETLOOP_SUCCESS);
+				goto done;
+			}
+		}
 		/*
 		 *	Abort if ctrl-c was pressed.
 		 */
