@@ -2163,8 +2163,9 @@ CLEAN_FILES += include/bmp_logo.h include/bmp_logo_data.h \
 	       idbloader.img flash.bin flash.log defconfig keep-syms-lto.c \
 	       mkimage-out.spl.mkimage mkimage.spl.mkimage imx-boot.map \
 	       itb.fit.fit itb.fit.itb itb.map spl.map mkimage-out.rom.mkimage \
-	       mkimage.rom.mkimage rom.map simple-bin.map simple-bin-spi.map \
-	       idbloader-spi.img lib/efi_loader/helloworld_efi.S
+	       mkimage.rom.mkimage mkimage-in-simple-bin* rom.map simple-bin* \
+	       idbloader-spi.img lib/efi_loader/helloworld_efi.S *.itb \
+	       net/lwip/apps/ping/ping.c
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config include/generated spl tpl vpl \
