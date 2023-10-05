@@ -158,7 +158,7 @@ def test_efi_helloworld_net(u_boot_console):
 
     addr = fetch_tftp_file(u_boot_console, 'env__efi_loader_helloworld_file')
 
-    output = u_boot_console.run_command('bootefi %x' % addr)
+    output = u_boot_console.run_command('bootefi $fileaddr:$filesize')
     expected_text = 'Hello, world'
     assert expected_text in output
     expected_text = '## Application failed'
@@ -187,7 +187,7 @@ def test_efi_grub_net(u_boot_console):
 
     addr = fetch_tftp_file(u_boot_console, 'env__efi_loader_grub_file')
 
-    u_boot_console.run_command('bootefi %x' % addr, wait_for_prompt=False)
+    u_boot_console.run_command('bootefi %x:$filesize' % addr, wait_for_prompt=False)
 
     # Verify that we have an SMBIOS table
     check_smbios = u_boot_console.config.env.get('env__efi_loader_check_smbios', False)
