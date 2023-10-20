@@ -65,6 +65,9 @@ int sandbox_eth_arp_req_to_reply(struct udevice *dev, void *packet,
 	struct ethernet_hdr *eth_recv;
 	struct arp_hdr *arp_recv;
 
+	if (!priv)
+		return -EAGAIN;
+
 	if (ntohs(eth->et_protlen) != PROT_ARP)
 		return -EAGAIN;
 
@@ -82,6 +85,8 @@ int sandbox_eth_arp_req_to_reply(struct udevice *dev, void *packet,
 
 	/* Formulate a fake response */
 	eth_recv = (void *)priv->recv_packet_buffer[priv->recv_packets];
+	if (!eth_recv)
+		return -EAGAIN;
 	memcpy(eth_recv->et_dest, eth->et_src, ARP_HLEN);
 	memcpy(eth_recv->et_src, priv->fake_host_hwaddr, ARP_HLEN);
 	eth_recv->et_protlen = htons(PROT_ARP);
