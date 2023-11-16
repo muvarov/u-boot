@@ -154,6 +154,7 @@ stages:
     steps:
       - script: |
           cat << "EOF" > build.sh
+          set -x
           cd $(work_dir)
           git config --global user.name "Azure Pipelines"
           git config --global user.email bmeng.cn@gmail.com
@@ -175,6 +176,7 @@ stages:
           make O=${UBOOT_TRAVIS_BUILD_DIR} testconfig
           EOF
           cat build.sh
+          make initsubmodules
           # We cannot use "container" like other jobs above, as buildman
           # seems to hang forever with pre-configured "container" environment
           docker run -v $PWD:$(work_dir) $(ci_runner_image) /bin/bash $(work_dir)/build.sh
@@ -544,6 +546,9 @@ stages:
           export BUILDMAN="${BUILDMAN}"
           git config --global --add safe.directory ${WORK_DIR}
           pip install -r tools/buildman/requirements.txt
+          git clone ${WORK_DIR} /tmp/u-boot.git
+          WORK_DIR="/tmp/u-boot.git"
+          cd \${WORK_DIR}
           EOF
           cat << "EOF" >> build.sh
           if [[ "${BUILDMAN}" != "" ]]; then
