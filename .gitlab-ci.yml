@@ -97,8 +97,9 @@ build all 32bit ARM platforms:
   stage: world build
   script:
     - ret=0;
-      git config --global --add safe.directory "${CI_PROJECT_DIR}";
       pip install -r tools/buildman/requirements.txt;
+      git clone `pwd` /tmp/u-boot.git;
+      cd /tmp/u-boot.git;
       ./tools/buildman/buildman -o /tmp -PEWM arm -x aarch64 || ret=$?;
       if [[ $ret -ne 0 ]]; then
         ./tools/buildman/buildman -o /tmp -seP;
@@ -111,8 +112,9 @@ build all 64bit ARM platforms:
     - virtualenv -p /usr/bin/python3 /tmp/venv
     - . /tmp/venv/bin/activate
     - ret=0;
-      git config --global --add safe.directory "${CI_PROJECT_DIR}";
       pip install -r tools/buildman/requirements.txt;
+      git clone `pwd` /tmp/u-boot.git;
+      cd /tmp/u-boot.git;
       ./tools/buildman/buildman -o /tmp -PEWM aarch64 || ret=$?;
       if [[ $ret -ne 0 ]]; then
         ./tools/buildman/buildman -o /tmp -seP;
@@ -123,7 +125,8 @@ build all PowerPC platforms:
   stage: world build
   script:
     - ret=0;
-      git config --global --add safe.directory "${CI_PROJECT_DIR}";
+      git clone `pwd` /tmp/u-boot.git;
+      cd /tmp/u-boot.git;
       ./tools/buildman/buildman -o /tmp -P -E -W powerpc || ret=$?;
       if [[ $ret -ne 0 ]]; then
         ./tools/buildman/buildman -o /tmp -seP;
@@ -134,7 +137,8 @@ build all other platforms:
   stage: world build
   script:
     - ret=0;
-      git config --global --add safe.directory "${CI_PROJECT_DIR}";
+      git clone `pwd` /tmp/u-boot.git;
+      cd /tmp/u-boot.git;
       ./tools/buildman/buildman -o /tmp -PEWM -x arm,powerpc || ret=$?;
       if [[ $ret -ne 0 ]]; then
         ./tools/buildman/buildman -o /tmp -seP;
@@ -206,7 +210,8 @@ Run binman, buildman, dtoc, Kconfig and patman testsuites:
   script:
     - git config --global user.name "GitLab CI Runner";
       git config --global user.email trini@konsulko.com;
-      git config --global --add safe.directory "${CI_PROJECT_DIR}";
+      git clone `pwd` /tmp/u-boot.git;
+      cd /tmp/u-boot.git;
       export USER=gitlab;
       virtualenv -p /usr/bin/python3 /tmp/venv;
       . /tmp/venv/bin/activate;
