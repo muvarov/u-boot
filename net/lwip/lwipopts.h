@@ -147,7 +147,15 @@
 
 #define LWIP_UDP                        1
 
+/*
+ * Note: SPL code has limited space, TCP
+ * has to be disabled for SPL build.
+ **/
+#if defined(CONFIG_CMD_WGET)
 #define LWIP_TCP                        1
+#else
+#define LWIP_TCP                        0
+#endif
 
 #define LWIP_LISTEN_BACKLOG             0
 
