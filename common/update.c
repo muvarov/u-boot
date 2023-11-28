@@ -30,6 +30,7 @@ extern int tftp_timeout_count_max;
 #include <mtd/cfi_flash.h>
 static uchar *saved_prot_info;
 #endif
+#if 0
 static int update_load(char *filename, ulong msec_max, int cnt_max, ulong addr)
 {
 	int size, rv;
@@ -77,6 +78,7 @@ static int update_load(char *filename, ulong msec_max, int cnt_max, ulong addr)
 
 	return rv;
 }
+#endif
 
 #ifdef CONFIG_MTD_NOR_FLASH
 static int update_flash_protect(int prot, ulong addr_first, ulong addr_last)
@@ -255,11 +257,13 @@ int update_tftp(ulong addr, char *interface, char *devstring)
 		addr = CONFIG_UPDATE_LOAD_ADDR;
 
 
+#if 0
 	if (update_load(filename, CONFIG_UPDATE_TFTP_MSEC_MAX,
 					CONFIG_UPDATE_TFTP_CNT_MAX, addr)) {
 		printf("Can't load update file, aborting auto-update\n");
 		return 1;
 	}
+#endif
 
 got_update_file:
 	fit = map_sysmem(addr, 0);

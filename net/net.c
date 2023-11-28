@@ -113,9 +113,6 @@
 #include "arp.h"
 #include "bootp.h"
 #include "cdp.h"
-#if defined(CONFIG_CMD_DNS)
-#include "dns.h"
-#endif
 #include "link_local.h"
 #include "nfs.h"
 #include "ping.h"
@@ -347,7 +344,6 @@ void net_auto_load(void)
 		}
 		return;
 	}
-	tftp_start(TFTPGET);
 }
 
 static int net_init_loop(void)
@@ -444,10 +440,6 @@ int net_loop(enum proto_t protocol)
 	int ret = -EINVAL;
 	enum net_loop_state prev_net_state = net_state;
 
-#if defined(CONFIG_CMD_PING)
-	if (protocol != PING)
-		net_ping_ip.s_addr = 0;
-#endif
 	net_restarted = 0;
 	net_dev_exists = 0;
 	net_try_count = 1;
@@ -517,12 +509,10 @@ restart:
 		case TFTPPUT:
 #endif
 			/* always use ARP to get server ethernet address */
-			tftp_start(protocol);
 			break;
 #endif
 #ifdef CONFIG_CMD_TFTPSRV
 		case TFTPSRV:
-			tftp_start_server();
 			break;
 #endif
 #if defined(CONFIG_UDP_FUNCTION_FASTBOOT)
@@ -560,11 +550,6 @@ restart:
 			rarp_request();
 			break;
 #endif
-#if defined(CONFIG_CMD_PING)
-		case PING:
-			ping_start();
-			break;
-#endif
 #if defined(CONFIG_CMD_PING6)
 		case PING6:
 			ping6_start();
@@ -588,11 +573,6 @@ restart:
 #if defined(CONFIG_NETCONSOLE) && !defined(CONFIG_SPL_BUILD)
 		case NETCONS:
 			nc_start();
-			break;
-#endif
-#if defined(CONFIG_CMD_DNS)
-		case DNS:
-			dns_start();
 			break;
 #endif
 #if defined(CONFIG_CMD_LINK_LOCAL)
@@ -1199,9 +1179,6 @@ static void receive_icmp(struct ip_udp_hdr *ip, int len,
 		       &icmph->un.gateway);
 		break;
 	default:
-#if defined(CONFIG_CMD_PING)
-		ping_receive(et, ip, len);
-#endif
 #ifdef CONFIG_CMD_TFTPPUT
 		if (packet_icmp_handler)
 			packet_icmp_handler(icmph->type, icmph->code,
@@ -1492,27 +1469,10 @@ void net_process_received_packet(uchar *in_packet, int len)
 static int net_check_prereq(enum proto_t protocol)
 {
 	switch (protocol) {
-		/* Fall through */
-#if defined(CONFIG_CMD_PING)
-	case PING:
-		if (net_ping_ip.s_addr == 0) {
-			puts("*** ERROR: ping address not given\n");
-			return 1;
-		}
-		goto common;
-#endif
 #if defined(CONFIG_CMD_PING6)
 	case PING6:
 		if (ip6_is_unspecified_addr(&net_ping_ip6)) {
 			puts("*** ERROR: ping address not given\n");
-			return 1;
-		}
-		goto common;
-#endif
-#if defined(CONFIG_CMD_DNS)
-	case DNS:
-		if (net_dns_server.s_addr == 0) {
-			puts("*** ERROR: DNS server address not given\n");
 			return 1;
 		}
 		goto common;
@@ -1541,8 +1501,7 @@ static int net_check_prereq(enum proto_t protocol)
 			puts("*** ERROR: `serverip' not set\n");
 			return 1;
 		}
-#if	defined(CONFIG_CMD_PING) || \
-	defined(CONFIG_CMD_DNS) || defined(CONFIG_PROT_UDP)
+#if	defined(CONFIG_PROT_UDP) || defined(CONFIG_CMD_PING6)
 common:
 #endif
 		/* Fall through */
