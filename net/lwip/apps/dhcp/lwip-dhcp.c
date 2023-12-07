@@ -14,6 +14,7 @@
 
 #include <net/eth.h>
 #include <net/ulwip.h>
+#include <dm/device.h>
 
 #define DHCP_TMO_TIME 1000 /* poll for DHCP state change */
 #define DHCP_TMO_NUM  20  /* number of tries */
@@ -60,21 +61,39 @@ static void dhcp_tmo(void *arg)
 	sys_timeout(DHCP_TMO_TIME, dhcp_tmo, dpriv);
 }
 
+static struct netif *uidx_to_lwip_netif(int idx)
+{
+	struct netif *netif;
+	char name[2];
+
+	snprintf(name, 2, "%d", idx);
+
+	NETIF_FOREACH(netif) {
+		if (netif->name[0] == name[0] && netif->name[1] == name[1])
+			return netif;
+	}
+
+	return NULL;
+}
+
 int ulwip_dhcp(void)
 {
 	struct netif *netif;
-	int eth_idx;
 	struct dhcp_priv *dpriv;
+
+	struct udevice *udev;
 
 	dpriv = malloc(sizeof(struct dhcp_priv));
 	if (!dpriv)
 		return -EPERM;
 
-	eth_idx = eth_get_dev_index();
-	if (eth_idx < 0)
-		return -EPERM;
+	udev = eth_get_dev();
+	if (!udev)
+		return -ENOENT;
 
-	netif = netif_get_by_index(eth_idx + 1);
+	log_info("dhcp using: %d:%s\n", udev->seq_, udev->name);
+
+	netif = uidx_to_lwip_netif(dev_seq(udev));
 	if (!netif)
 		return -ENOENT;
 
