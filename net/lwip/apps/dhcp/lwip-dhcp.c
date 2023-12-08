@@ -21,6 +21,7 @@
 
 typedef struct dhcp_priv {
 	int num_tries;
+	int net_idx;
 	struct netif *netif;
 } dhcp_priv;
 
@@ -30,7 +31,7 @@ static void dhcp_tmo(void *arg)
 	struct netif *netif = dpriv->netif;
 	struct dhcp *dhcp;
 
-	log_err("%s %d/%d\n", __func__, dpriv->num_tries, DHCP_TMO_NUM);
+	log_info("%s %d/%d\n", __func__, dpriv->num_tries, DHCP_TMO_NUM);
 	dhcp = netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP);
 	if (!dhcp)
 		return;
@@ -39,9 +40,20 @@ static void dhcp_tmo(void *arg)
 		int err = 0;
 
 		err -= env_set("bootfile", dhcp->boot_file_name);
-		err -= env_set("ipaddr", ip4addr_ntoa(&dhcp->offered_ip_addr));
-		err -= env_set("netmask", ip4addr_ntoa(&dhcp->offered_sn_mask));
-		err -= env_set("serverip", ip4addr_ntoa(&dhcp->server_ip_addr));
+		if (!dpriv->net_idx)  {
+			err -= env_set("ipaddr", ip4addr_ntoa(&dhcp->offered_ip_addr));
+			err -= env_set("netmask", ip4addr_ntoa(&dhcp->offered_sn_mask));
+			err -= env_set("serverip", ip4addr_ntoa(&dhcp->server_ip_addr));
+		} else {
+			char var[10];
+
+			snprintf(var, 10, "ipaddr%d", dpriv->net_idx);
+			err -= env_set(var, ip4addr_ntoa(&dhcp->offered_ip_addr));
+			snprintf(var, 10, "netmask%d", dpriv->net_idx);
+			err -= env_set(var, ip4addr_ntoa(&dhcp->offered_sn_mask));
+			snprintf(var, 10, "serverip%d", dpriv->net_idx);
+			err -= env_set(var, ip4addr_ntoa(&dhcp->server_ip_addr));
+		}
 		if (err)
 			log_err("error update envs\n");
 		log_info("DHCP client bound to address %s\n", ip4addr_ntoa(&dhcp->offered_ip_addr));
@@ -99,6 +111,7 @@ int ulwip_dhcp(void)
 
 	dpriv->num_tries = DHCP_TMO_NUM;
 	dpriv->netif = netif;
+	dpriv->net_idx = dev_seq(udev);
 	sys_timeout(DHCP_TMO_TIME, dhcp_tmo, dpriv);
 
 	return dhcp_start(netif) ? -EPERM : 0;
