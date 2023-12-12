@@ -137,7 +137,7 @@
 #define LWIP_DHCP_BOOTP_FILE		1
 #define LWIP_DHCP_DOES_ACD_CHECK	0
 
-#define LWIP_AUTOIP                     0
+#define LWIP_AUTOIP                     1
 
 #define LWIP_SNMP                       0
 
