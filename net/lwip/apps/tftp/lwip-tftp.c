@@ -8,6 +8,8 @@
 #include <command.h>
 #include <console.h>
 #include <bootstage.h>
+#include <efi_loader.h>
+#include <mapmem.h>
 
 #include "tftp_client.h"
 #include "tftp_server.h"
@@ -17,6 +19,7 @@
 
 #include <net/ulwip.h>
 
+static char *filename;
 static ulong daddr;
 static ulong size;
 static unsigned int progress_print;
@@ -38,6 +41,12 @@ static void tftp_close(void *handle)
 		ulwip_exit(-1);
 		return;
 	}
+
+	if (IS_ENABLED(CONFIG_CMD_BOOTEFI))
+		efi_set_bootdev("Net", "", filename,
+			map_sysmem(daddr - size, 1),
+			size);
+
 	ulwip_exit(0);
 }
 
@@ -51,7 +60,9 @@ static int tftp_write(void *handle, struct pbuf *p)
 	struct pbuf *q;
 
 	for (q = p; q != NULL; q = q->next) {
-		memcpy((void *)daddr, q->payload, q->len);
+		void *ptr = map_sysmem(daddr, q->len);
+		memcpy(ptr, q->payload, q->len);
+		unmap_sysmem(ptr);
 		daddr += q->len;
 		size += q->len;
 		if (!(progress_print++ % PROGRESS_PRINT))
