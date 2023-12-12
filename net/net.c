@@ -109,7 +109,6 @@
 #include <linux/compiler.h>
 #include <test/test.h>
 #include <net/tcp.h>
-#include <net/wget.h>
 #include "arp.h"
 #include "bootp.h"
 #include "cdp.h"
@@ -558,11 +557,6 @@ restart:
 #if defined(CONFIG_CMD_NFS) && !defined(CONFIG_SPL_BUILD)
 		case NFS:
 			nfs_start();
-			break;
-#endif
-#if defined(CONFIG_CMD_WGET)
-		case WGET:
-			wget_start();
 			break;
 #endif
 #if defined(CONFIG_CMD_CDP)
